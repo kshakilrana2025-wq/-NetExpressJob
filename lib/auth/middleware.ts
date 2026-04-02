@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyJWT } from './jwt';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import User from '@/models/User';
+import { JwtPayload } from 'jsonwebtoken';
 
 export async function getAuthUser(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
   if (!token) return null;
   const decoded = verifyJWT(token);
-  if (!decoded) return null;
+  if (!decoded || typeof decoded === 'string') return null;
   await connectToDatabase();
   return await User.findById(decoded.userId).select('-password');
 }
