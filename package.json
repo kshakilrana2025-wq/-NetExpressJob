@@ -1,9 +1,4 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs"
-}
-{
   "name": "netexpressjob",
   "version": "1.0.0",
   "private": true,
@@ -15,7 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "next": "14.0.4",
+    "next": "14.2.25",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "mongoose": "^8.0.3",
