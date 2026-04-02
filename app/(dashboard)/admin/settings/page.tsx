@@ -67,9 +67,12 @@ export default function AdminSettings() {
           <div key={method.name} className="border-b border-gray-700 py-4">
             <h3 className="text-lg font-semibold">{method.name}</h3>
             <div className="grid md:grid-cols-3 gap-4 mt-2">
-              <Input label="Number" value={method.number} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, number: e.target.value } : m))} />
               <div>
-                <label className="block text-sm">Mode</label>
+                <label className="block text-sm mb-1">Number</label>
+                <Input value={method.number} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, number: e.target.value } : m))} />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Mode</label>
                 <select className="w-full bg-gray-700 p-2 rounded" value={method.mode} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, mode: e.target.value } : m))}>
                   <option value="sandbox">Sandbox</option>
                   <option value="live">Live</option>
