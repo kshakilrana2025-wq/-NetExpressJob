@@ -5,9 +5,24 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { showToast } from '@/components/ui/Toast';
 
+interface PaymentMethod {
+  name: string;
+  number: string;
+  isActive: boolean;
+  mode: 'live' | 'sandbox';
+  apiKey?: string;
+  secretKey?: string;
+  merchantId?: string;
+}
+
 export default function AdminSettings() {
-  const [settings, setSettings] = useState({ activationFee: 500, paymentVerificationMode: 'manual', referralRegistrationBonus: 1, referralActivationBonus: 150 });
-  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [settings, setSettings] = useState({
+    activationFee: 500,
+    paymentVerificationMode: 'manual',
+    referralRegistrationBonus: 1,
+    referralActivationBonus: 150
+  });
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   useEffect(() => {
     fetch('/api/admin/settings').then(res => res.json()).then(setSettings);
@@ -23,13 +38,31 @@ export default function AdminSettings() {
     if (res.ok) showToast.success('Settings updated');
   };
 
-  const updatePaymentMethod = async (method: any) => {
+  const updatePaymentMethod = async (method: PaymentMethod) => {
     const res = await fetch('/api/admin/payment-methods', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(method)
     });
     if (res.ok) showToast.success(`${method.name} updated`);
+  };
+
+  const handleNumberChange = (name: string, newNumber: string) => {
+    setPaymentMethods(prev =>
+      prev.map(m => (m.name === name ? { ...m, number: newNumber } : m))
+    );
+  };
+
+  const handleModeChange = (name: string, newMode: 'live' | 'sandbox') => {
+    setPaymentMethods(prev =>
+      prev.map(m => (m.name === name ? { ...m, mode: newMode } : m))
+    );
+  };
+
+  const handleActiveToggle = (name: string, isActive: boolean) => {
+    setPaymentMethods(prev =>
+      prev.map(m => (m.name === name ? { ...m, isActive } : m))
+    );
   };
 
   return (
@@ -44,7 +77,7 @@ export default function AdminSettings() {
           </div>
           <div>
             <label className="block text-sm mb-1">Payment Verification Mode</label>
-            <select className="w-full bg-gray-700 p-2 rounded" value={settings.paymentVerificationMode} onChange={(e) => setSettings({ ...settings, paymentVerificationMode: e.target.value as any })}>
+            <select className="w-full bg-gray-700 p-2 rounded" value={settings.paymentVerificationMode} onChange={(e) => setSettings({ ...settings, paymentVerificationMode: e.target.value })}>
               <option value="manual">Manual</option>
               <option value="api">API (Auto)</option>
             </select>
@@ -63,29 +96,42 @@ export default function AdminSettings() {
 
       <Card>
         <h2 className="text-xl font-semibold mb-4">Payment Methods</h2>
-        {paymentMethods.map((method: any) => (
+        {paymentMethods.map((method) => (
           <div key={method.name} className="border-b border-gray-700 py-4">
             <h3 className="text-lg font-semibold">{method.name}</h3>
             <div className="grid md:grid-cols-3 gap-4 mt-2">
               <div>
                 <label className="block text-sm mb-1">Number</label>
-                <Input value={method.number} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, number: e.target.value } : m))} />
+                <Input
+                  value={method.number}
+                  onChange={(e) => handleNumberChange(method.name, e.target.value)}
+                />
               </div>
               <div>
                 <label className="block text-sm mb-1">Mode</label>
-                <select className="w-full bg-gray-700 p-2 rounded" value={method.mode} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, mode: e.target.value } : m))}>
+                <select
+                  className="w-full bg-gray-700 p-2 rounded"
+                  value={method.mode}
+                  onChange={(e) => handleModeChange(method.name, e.target.value as 'live' | 'sandbox')}
+                >
                   <option value="sandbox">Sandbox</option>
                   <option value="live">Live</option>
                 </select>
               </div>
               <div className="flex items-end">
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={method.isActive} onChange={(e) => setPaymentMethods(prev => prev.map(m => m.name === method.name ? { ...m, isActive: e.target.checked } : m))} />
+                  <input
+                    type="checkbox"
+                    checked={method.isActive}
+                    onChange={(e) => handleActiveToggle(method.name, e.target.checked)}
+                  />
                   Active
                 </label>
               </div>
             </div>
-            <Button onClick={() => updatePaymentMethod(method)} className="mt-2">Update {method.name}</Button>
+            <Button onClick={() => updatePaymentMethod(method)} className="mt-2">
+              Update {method.name}
+            </Button>
           </div>
         ))}
       </Card>
