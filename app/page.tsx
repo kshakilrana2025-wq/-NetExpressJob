@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { FiWifi } from 'react-icons/fi';
 
 export default function HomePage() {
   return (
@@ -9,7 +8,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
-              <FiWifi className="text-3xl text-purple-600" />
+              <span className="text-3xl text-purple-600">📶</span>
               <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 NetExpressJob
               </span>
@@ -25,7 +24,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 py-16 sm:py-24">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-6">
-            <FiWifi className="text-xl" />
+            <span className="text-xl">📶</span>
             <span className="text-sm font-medium">Start Earning Today</span>
           </div>
           <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-900 mb-4">
@@ -76,7 +75,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center px-4">
           <h2 className="text-3xl font-bold text-gray-800 mb-4">Ready to Start Earning?</h2>
           <p className="text-gray-600 mb-6">Join thousands of users already making money with NetExpressJob.</p>
-          <Link href="/register" className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-700 transition">Get Started Now <FiWifi className="text-xl" /></Link>
+          <Link href="/register" className="inline-flex items-center gap-2 bg-purple-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-purple-700 transition">Get Started Now <span className="text-xl">📶</span></Link>
         </div>
       </div>
 
