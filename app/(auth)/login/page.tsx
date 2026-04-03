@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { showToast } from '@/components/ui/Toast';
+import { WiWifi } from 'react-icons/wi';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -9,13 +10,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetStep, setResetStep] = useState<'email' | 'otp' | 'reset'>('email');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // The HTML uses "Student ID or Phone" – we'll treat as email or phone.
-    // Your backend expects email. We'll assume the user enters email.
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,129 +35,192 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="modal" style={{ display: 'block', position: 'relative', background: 'transparent', boxShadow: 'none' }}>
-        <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
-          <h2 id="loginTitle">Sign In</h2>
-          <small>
-            New User?{' '}
-            <a href="/register" style={{ fontWeight: 'bold', textDecoration: 'underline' }}>
-              Create an Account
-            </a>
-          </small>
+  const handleSendOtp = async () => {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: forgotEmail })
+    });
+    if (res.ok) {
+      setOtpSent(true);
+      setResetStep('otp');
+      showToast.success('OTP sent to your email');
+    } else {
+      const data = await res.json();
+      showToast.error(data.error || 'Failed to send OTP');
+    }
+  };
 
-          <form onSubmit={handleSubmit}>
-            <label htmlFor="loginId">Student ID or Phone</label>
+  const handleVerifyOtp = async () => {
+    const res = await fetch('/api/auth/verify-reset-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: forgotEmail, otp })
+    });
+    if (res.ok) {
+      setResetStep('reset');
+      showToast.success('OTP verified. Set new password.');
+    } else {
+      showToast.error('Invalid OTP');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: forgotEmail, otp, newPassword })
+    });
+    if (res.ok) {
+      showToast.success('Password reset successfully. Please login.');
+      setShowForgotModal(false);
+      setResetStep('email');
+      setForgotEmail('');
+      setOtp('');
+      setNewPassword('');
+    } else {
+      showToast.error('Reset failed');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
+        <div className="flex justify-center mb-6">
+          <WiWifi className="text-5xl text-purple-600" />
+          <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent ml-2">NetExpressJob</span>
+        </div>
+        <h2 className="text-2xl font-bold text-center">Sign In</h2>
+        <p className="text-center text-gray-500 text-sm mt-1">
+          New user?{' '}
+          <a href="/register" className="text-purple-600 font-semibold">Create an Account</a>
+        </p>
+
+        <form onSubmit={handleLogin} className="mt-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Student ID or Phone</label>
             <input
-              id="loginId"
               type="text"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-purple-500 focus:border-purple-500"
               placeholder="Type your student id or phone"
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
               required
             />
-
-            <label htmlFor="loginPass" style={{ marginTop: '8px' }}>Password</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <div className="relative">
               <input
-                id="loginPass"
                 type={showPassword ? 'text' : 'password'}
+                className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 pr-20"
                 placeholder="********"
-                style={{ flex: 1 }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <div className="eye" onClick={() => setShowPassword(!showPassword)} style={{ cursor: 'pointer' }}>
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-purple-600"
+                onClick={() => setShowPassword(!showPassword)}
+              >
                 {showPassword ? 'hide' : 'show'}
-              </div>
+              </button>
             </div>
-
-            <a
-              className="forgot"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('Please contact support to reset password (demo).');
-              }}
-              style={{ fontWeight: 'bold', textDecoration: 'underline', display: 'inline-block', marginTop: '8px' }}
+          </div>
+          <div className="text-right">
+            <button
+              type="button"
+              className="text-sm text-purple-600 hover:underline"
+              onClick={() => setShowForgotModal(true)}
             >
               Forgot Password?
-            </a>
-
-            <button className="submit-btn" type="submit" disabled={loading} style={{ marginTop: '12px', width: '100%' }}>
-              {loading ? 'Signing in...' : 'Sign In'}
             </button>
-          </form>
-        </div>
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-purple-600 text-white py-2 rounded-full font-semibold hover:bg-purple-700 transition"
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+        </form>
       </div>
 
-      <style jsx>{`
-        .modal {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        .card {
-          background: white;
-          border-radius: 16px;
-          padding: 24px;
-          width: 90%;
-          max-width: 420px;
-          box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2);
-        }
-        .card h2 {
-          margin: 0 0 8px 0;
-          font-size: 28px;
-        }
-        .card label {
-          display: block;
-          font-size: 14px;
-          font-weight: 600;
-          margin-bottom: 6px;
-          color: #333;
-        }
-        .card input, .card select {
-          width: 100%;
-          padding: 10px 12px;
-          border: 1px solid #ccc;
-          border-radius: 8px;
-          font-size: 14px;
-        }
-        .eye {
-          background: #f0f0f0;
-          padding: 10px 12px;
-          border-radius: 8px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-        .submit-btn {
-          background: #7c3aed;
-          color: white;
-          border: none;
-          padding: 12px;
-          border-radius: 40px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: 0.2s;
-        }
-        .submit-btn:hover {
-          background: #6d28d9;
-        }
-        .forgot {
-          font-size: 13px;
-          margin-top: 8px;
-          display: inline-block;
-        }
-      `}</style>
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold mb-4">Reset Password</h3>
+            {resetStep === 'email' && (
+              <>
+                <p className="text-gray-600 text-sm mb-4">Enter your email to receive an OTP.</p>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4"
+                  placeholder="Your email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                />
+                <button
+                  onClick={handleSendOtp}
+                  className="w-full bg-purple-600 text-white py-2 rounded-full"
+                >
+                  Send OTP
+                </button>
+              </>
+            )}
+            {resetStep === 'otp' && (
+              <>
+                <p className="text-gray-600 text-sm mb-4">Enter the OTP sent to {forgotEmail}</p>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4"
+                  placeholder="6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+                <button
+                  onClick={handleVerifyOtp}
+                  className="w-full bg-purple-600 text-white py-2 rounded-full"
+                >
+                  Verify OTP
+                </button>
+              </>
+            )}
+            {resetStep === 'reset' && (
+              <>
+                <p className="text-gray-600 text-sm mb-4">Enter your new password</p>
+                <input
+                  type="password"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4"
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  onClick={handleResetPassword}
+                  className="w-full bg-purple-600 text-white py-2 rounded-full"
+                >
+                  Reset Password
+                </button>
+              </>
+            )}
+            <button
+              className="mt-4 text-sm text-gray-500 w-full text-center"
+              onClick={() => {
+                setShowForgotModal(false);
+                setResetStep('email');
+                setForgotEmail('');
+                setOtp('');
+                setNewPassword('');
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
